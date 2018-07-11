@@ -118,6 +118,23 @@
                    (move state :runner c :rfg))
                  (effect-completed state side eid card))}
 
+"Attitude Adjustment"
+{:async true
+ :effect (req (wait-for (draw state side 2 nil)
+                        (continue-ability state side
+                          {:prompt "Choose up to 2 agendas in HQ or Archives"
+                           :choices {:max 2
+                                     :req #(and (= (:side %) "Corp")
+                                                (is-type? % "Agenda")
+                                                (or (in-hand? %)
+                                                    (in-discard? %)))}
+                           :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
+                           :effect (req (gain-credits state side (* 2 (count targets)))
+                                        (doseq [c targets]
+                                          (move state :corp c :deck))
+                                        (shuffle! state :corp :deck)
+                                        (effect-completed state side eid))})))}
+
    "Audacity"
    (let [audacity (fn au [n] {:prompt "Choose a card on which to place an advancement"
                               :delayed-completion true
